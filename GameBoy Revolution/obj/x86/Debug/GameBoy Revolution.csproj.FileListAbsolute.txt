@@ -1,1 +1,2 @@
 j:\users\hatorijr software\documents\visual studio 2010\Projects\GameBoy Revolution\GameBoy Revolution\bin\Debug\GameBoy Revolution.exe.config
+J:\Users\Hatorijr Software\Desktop\Programming Projects\C# Projects\projects_c#_2010\GameBoy Revolution\GameBoy Revolution\bin\Debug\GameBoy Revolution.exe.config
