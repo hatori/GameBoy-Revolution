@@ -8,6 +8,13 @@
 *.FileListAbsolute.txt
 *.pdf
 
+GameBoy Revolution/bin/Release/Compare/
+GameBoy Revolution/bin/Release/GameBoy/
+GameBoy Revolution/bin/Release/cpu_instrs/
+GameBoy Revolution/bin/Release/mem_timing-2/
+GameBoy Revolution/bin/Release/instr_timing/
+GameBoy Revolution/bin/Release/mem_timing/
+GameBoy Revolution/bin/Release/test roms/
 GameBoy Revolution/bin/Debug/*.*
 GameBoy Revolution/bin/Release/*.*
 GameBoy Revolution/obj/
