@@ -10,7 +10,8 @@
 
 GameBoy Revolution/bin/Debug/*.*
 GameBoy Revolution/bin/Release/*.*
-GameBoy Revolution/obj/*.*
+GameBoy Revolution/obj/
 !GameBoy Revolution.exe
 !GameBoy Revolution.exe.config
 !SlimDX.dll
+

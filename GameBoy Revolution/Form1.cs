@@ -16,7 +16,7 @@ namespace GameBoy_Revolution
         private Memory memory;
         //private Sound sound;
         private CPU cpu;
-        //private Input input;
+        private Input input;
         private Timer time;
         private Debugger debugger;
         private bool paused;
@@ -42,7 +42,7 @@ namespace GameBoy_Revolution
         {
             try
             {
-                Assembly.Load("SlimDX, Version=4.0.11.43, Culture=neutral, PublicKeyToken=b1b0c32fd1ffe4f9");
+                Assembly.Load("SlimDX, Version=2.0.10.43, Culture=neutral, PublicKeyToken=b1b0c32fd1ffe4f9");
             }
             catch
             {
@@ -264,20 +264,25 @@ namespace GameBoy_Revolution
         {
             if (Critical_failure == false)
             {
-                /*if (video != null)
+                if (video != null)
                 {
                     video.uninit_directx();
                 }
 
-                if (sound != null)
+                /*if (sound != null)
                 {
                     sound.uninit_directsound();
-                }
+                }*/
 
                 if (input != null)
                 {
                     input.Uninitialize_Keyboard();
-                }*/
+                }
+
+                if (cpu != null)
+                {
+                    cpu.Write_Opcode_Log();
+                }
             }
         }
         #endregion
@@ -366,7 +371,7 @@ namespace GameBoy_Revolution
         }
         #endregion
 
-        /*#region retrieve input
+        #region retrieve input
         public Input main_input
         {
             get
@@ -378,7 +383,7 @@ namespace GameBoy_Revolution
                 input = value;
             }
         }
-        #endregion*/
+        #endregion
 
         #region paused state
         public bool Paused_state
@@ -454,18 +459,18 @@ namespace GameBoy_Revolution
                         {
                             memory = new Memory();
                         }
-                        //input = new Input(this, video.Directx_Window.Handle);
+                        input = new Input(this, video.Directx_Window.Handle);
                         //sound = new Sound(this, video);
-                        cpu = new CPU(this, ref memory, ref video/*, ref sound, ref input*/);
+                        cpu = new CPU(this, ref memory, ref video/*, ref sound*/, ref input);
                     }
                     else
                     {
                         video.reinit_directx();
                         //sound.reinit_directsound();
-                        //input.Reinitialize_Keyboard(video.Directx_Window.Handle);
+                        input.Reinitialize_Keyboard(video.Directx_Window.Handle);
                         if (cpu == null)
                         {
-                            cpu = new CPU(this, ref memory, ref video/*, ref sound, ref input*/);
+                            cpu = new CPU(this, ref memory, ref video/*, ref sound*/, ref input);
                         }
                     }
 
@@ -819,16 +824,22 @@ namespace GameBoy_Revolution
                     }
                     //input = new Input(this, video.Directx_Window.Handle);
                     //sound = new Sound(this, video);
-                    cpu = new CPU(this, ref memory, ref video/*, ref sound, ref input*/);
+                    cpu = new CPU(this, ref memory, ref video/*, ref sound*/, ref input);
                 }
                 else
                 {
+                    Window_state = FormWindowState.Minimized;
+                    Taskbar_visibility = false;
+                    Screen_visibility = false;
+                    video.Window_state = FormWindowState.Normal;
+                    video.Taskbar_visibility = true;
+                    video.Screen_visibility = true;
                     video.reinit_directx();
                     //sound.reinit_directsound();
                     //input.Reinitialize_Keyboard(video.Directx_Window.Handle);
                     if (cpu == null)
                     {
-                        cpu = new CPU(this, ref memory, ref video/*, ref sound, ref input*/);
+                        cpu = new CPU(this, ref memory, ref video/*, ref sound*/, ref input);
                     }
                 }
 

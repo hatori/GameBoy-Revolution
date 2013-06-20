@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
@@ -31,21 +30,146 @@ namespace GameBoy_Revolution
         {
             txtPrevOpcode.Text = txtCurrOpcode.Text;
             txtCurrOpcode.Text = Decode_Opcode(_cpu.retrieve_next_opcode);
-            txtCPUStatus.Text = cpu_status();
+            txtIE.Text = _cpu.retrieve_memory.Retrieve_IE.ToString("X2");
+            txtIF.Text = _cpu.retrieve_memory.Retrieve_IF.ToString("X2");
+            chkZ.Checked = _cpu.check_zero_flag();
+            chkN.Checked = _cpu.check_negative_flag();
+            chkH.Checked = _cpu.check_auxiliary_flag();
+            chkC.Checked = _cpu.check_carry_flag();
+            chkIMEEnabled.Checked = _cpu.retrieve_IME;
             txtCurrCycles.Text = _cpu.retrieve_Cycles.ToString();
-            txtA.Text = _cpu.retrieve_cpu_status.A.ToString("X2");
             txtAF.Text = _cpu.retrieve_cpu_status.AF.ToString("X4");
-            txtB.Text = _cpu.retrieve_cpu_status.B.ToString("X2");
             txtBC.Text = _cpu.retrieve_cpu_status.BC.ToString("X4");
-            txtC.Text = _cpu.retrieve_cpu_status.C.ToString("X2");
-            txtD.Text = _cpu.retrieve_cpu_status.D.ToString("X2");
             txtDE.Text = _cpu.retrieve_cpu_status.DE.ToString("X4");
-            txtE.Text = _cpu.retrieve_cpu_status.E.ToString("X2");
-            txtH.Text = _cpu.retrieve_cpu_status.H.ToString("X2");
             txtHL.Text = _cpu.retrieve_cpu_status.HL.ToString("X4");
-            txtL.Text = _cpu.retrieve_cpu_status.L.ToString("X2");
             txtPC.Text = _cpu.retrieve_pc.ToString("X4");
             txtSP.Text = _cpu.retrieve_sp.ToString("X4");
+            UpdateMemory();
+        }
+        #endregion
+
+        #region update Tile Memory
+        public void updateTileMem()
+        {
+            string tempStore = "";
+
+            for (ushort i = 0x8000; i < 0x97FF;)
+            {
+                for (int j = 0x0; j < 0x10; j++)
+                {
+                    if (j == 0x0)
+                    {
+                        tempStore += i.ToString("X4") + " : " + _cpu.retrieve_memory.read_byte(i).ToString("X2") + "  ";
+                    }
+                    else
+                    {
+                        tempStore += _cpu.retrieve_memory.read_byte(i).ToString("X2") + "  ";
+                    }
+                    i++;
+                }
+                tempStore = tempStore + "\r\n";
+            }
+            txtMemory.Text = tempStore;
+        }
+        #endregion
+
+        #region update Video Memory
+        public void updateVidMem()
+        {
+            string tempStore = "";
+
+            for (ushort i = 0x9800; i < 0x9FFF; )
+            {
+                for (int j = 0x0; j < 0x10; j++)
+                {
+                    if (j == 0x0)
+                    {
+                        tempStore += i.ToString("X4") + " : " + _cpu.retrieve_memory.read_byte(i).ToString("X2") + "  ";
+                    }
+                    else
+                    {
+                        tempStore += _cpu.retrieve_memory.read_byte(i).ToString("X2") + "  ";
+                    }
+                    i++;
+                }
+                tempStore = tempStore + "\r\n";
+            }
+            txtMemory.Text = tempStore;
+        }
+        #endregion
+
+        #region update Ram Bank Memory
+        public void updateRamBankMem()
+        {
+            string tempStore = "";
+
+            for (ushort i = 0xA000; i < 0xBFFF; )
+            {
+                for (int j = 0x0; j < 0x10; j++)
+                {
+                    if (j == 0x0)
+                    {
+                        tempStore += i.ToString("X4") + " : " + _cpu.retrieve_memory.read_byte(i).ToString("X2") + "  ";
+                    }
+                    else
+                    {
+                        tempStore += _cpu.retrieve_memory.read_byte(i).ToString("X2") + "  ";
+                    }
+                    i++;
+                }
+                tempStore = tempStore + "\r\n";
+            }
+            txtMemory.Text = tempStore;
+        }
+        #endregion
+
+        #region update Internal Ram Memory
+        public void updateInternalRamMem()
+        {
+            string tempStore = "";
+
+            for (ushort i = 0xC000; i < 0xDFFF; )
+            {
+                for (int j = 0x0; j < 0x10; j++)
+                {
+                    if (j == 0x0)
+                    {
+                        tempStore += i.ToString("X4") + " : " + _cpu.retrieve_memory.read_byte(i).ToString("X2") + "  ";
+                    }
+                    else
+                    {
+                        tempStore += _cpu.retrieve_memory.read_byte(i).ToString("X2") + "  ";
+                    }
+                    i++;
+                }
+                tempStore = tempStore + "\r\n";
+            }
+            txtMemory.Text = tempStore;
+        }
+        #endregion
+
+        #region update System Memory
+        public void updateSystemMem()
+        {
+            string tempStore = "";
+
+            for (uint i = 0xFE00; i < 0x10000; )
+            {
+                for (int j = 0x0; j < 0x10; j++)
+                {
+                    if (j == 0x0)
+                    {
+                        tempStore += i.ToString("X4") + " : " + _cpu.retrieve_memory.read_byte((ushort)i).ToString("X2") + "  ";
+                    }
+                    else
+                    {
+                        tempStore += _cpu.retrieve_memory.read_byte((ushort)i).ToString("X2") + "  ";
+                    }
+                    i++;
+                }
+                tempStore = tempStore + "\r\n";
+            }
+            txtMemory.Text = tempStore;
         }
         #endregion
 
@@ -55,73 +179,34 @@ namespace GameBoy_Revolution
         /// </summary>
         public void InitDebugger()
         {
+            InitMemoryTypes();
             txtCurrOpcode.Text = "0x00";
-            txtCPUStatus.Text = " 0   0  0  0   0  0  0  0";
-            txtA.Text = "0x00";
+            txtIE.Text = "0x00";
+            txtIF.Text = "0x00";
+            chkZ.Checked = _cpu.check_zero_flag();
+            chkN.Checked = _cpu.check_negative_flag();
+            chkH.Checked = _cpu.check_auxiliary_flag();
+            chkC.Checked = _cpu.check_carry_flag();
+            chkIMEEnabled.Checked = _cpu.retrieve_IME;
             txtAF.Text = "0x0000";
-            txtB.Text = "0x00";
             txtBC.Text = "0x0000";
-            txtC.Text = "0x00";
             txtCurrCycles.Text = "0";
-            txtD.Text = "0x00";
             txtDE.Text = "0x0000";
-            txtE.Text = "0x00";
-            txtH.Text = "0x00";
             txtHL.Text = "0x0000";
-            txtL.Text = "0x00";
             txtPC.Text = "0x0000";
             txtPrevOpcode.Text = "0x00";
             txtSP.Text = "0x0000";
         }
         #endregion
 
-        #region cpu status
+        #region Init Memory Types
         /// <summary>
-        /// This returns the cpu status to the debugger.
+        /// This initializes the memory types dropdown.
         /// </summary>
-        public string cpu_status()
+        public void InitMemoryTypes()
         {
-            string status = "";
-
-            if (_cpu.check_zero_flag())
-            {
-                status += " 1";
-            }
-            else
-            {
-                status += " 0";
-            }
-
-            if (_cpu.check_negative_flag())
-            {
-                status += "   1";
-            }
-            else
-            {
-                status += "   0";
-            }
-
-            if (_cpu.check_auxiliary_flag())
-            {
-                status += "  1";
-            }
-            else
-            {
-                status += "  0";
-            }
-
-            if (_cpu.check_carry_flag())
-            {
-                status += "  1";
-            }
-            else
-            {
-                status += "  0";
-            }
-
-            status += "   0  0  0  0";
-
-            return status;
+            string[] types = new string[] { "", "Tile", "Video","Ram Bank", "Internal Ram", "System" };
+            cmbMemoryType.Items.AddRange(types);
         }
         #endregion
 
@@ -1155,1032 +1240,1032 @@ namespace GameBoy_Revolution
             {
                 case 0x00:
                     {
-                        return opcode2 + " RLC B";
+                        return opcode2.ToString("X2") + " RLC B";
                     }
                 case 0x01:
                     {
-                        return opcode2 + " RLC C";
+                        return opcode2.ToString("X2") + " RLC C";
                     }
                 case 0x02:
                     {
-                        return opcode2 + " RLC D";
+                        return opcode2.ToString("X2") + " RLC D";
                     }
                 case 0x03:
                     {
-                        return opcode2 + " RLC E";
+                        return opcode2.ToString("X2") + " RLC E";
                     }
                 case 0x04:
                     {
-                        return opcode2 + " RLC H";
+                        return opcode2.ToString("X2") + " RLC H";
                     }
                 case 0x05:
                     {
-                        return opcode2 + " RLC L";
+                        return opcode2.ToString("X2") + " RLC L";
                     }
                 case 0x06:
                     {
-                        return opcode2 + " RLC (HL)";
+                        return opcode2.ToString("X2") + " RLC (HL)";
                     }
                 case 0x07:
                     {
-                        return opcode2 + " RLC A";
+                        return opcode2.ToString("X2") + " RLC A";
                     }
                 case 0x08:
                     {
-                        return opcode2 + " RRC B";
+                        return opcode2.ToString("X2") + " RRC B";
                     }
                 case 0x09:
                     {
-                        return opcode2 + " RRC C";
+                        return opcode2.ToString("X2") + " RRC C";
                     }
                 case 0x0A:
                     {
-                        return opcode2 + " RRC D";
+                        return opcode2.ToString("X2") + " RRC D";
                     }
                 case 0x0B:
                     {
-                        return opcode2 + " RRC E";
+                        return opcode2.ToString("X2") + " RRC E";
                     }
                 case 0x0C:
                     {
-                        return opcode2 + " RRC H";
+                        return opcode2.ToString("X2") + " RRC H";
                     }
                 case 0x0D:
                     {
-                        return opcode2 + " RRC L";
+                        return opcode2.ToString("X2") + " RRC L";
                     }
                 case 0x0E:
                     {
-                        return opcode2 + " RRC (HL)";
+                        return opcode2.ToString("X2") + " RRC (HL)";
                     }
                 case 0x0F:
                     {
-                        return opcode2 + " RRC A";
+                        return opcode2.ToString("X2") + " RRC A";
                     }
                 case 0x10:
                     {
-                        return opcode2 + " RL B";
+                        return opcode2.ToString("X2") + " RL B";
                     }
                 case 0x11:
                     {
-                        return opcode2 + " RL C";
+                        return opcode2.ToString("X2") + " RL C";
                     }
                 case 0x12:
                     {
-                        return opcode2 + " RL D";
+                        return opcode2.ToString("X2") + " RL D";
                     }
                 case 0x13:
                     {
-                        return opcode2 + " RL E";
+                        return opcode2.ToString("X2") + " RL E";
                     }
                 case 0x14:
                     {
-                        return opcode2 + " RL H";
+                        return opcode2.ToString("X2") + " RL H";
                     }
                 case 0x15:
                     {
-                        return opcode2 + " RL L";
+                        return opcode2.ToString("X2") + " RL L";
                     }
                 case 0x16:
                     {
-                        return opcode2 + " RL (HL)";
+                        return opcode2.ToString("X2") + " RL (HL)";
                     }
                 case 0x17:
                     {
-                        return opcode2 + " RL A";
+                        return opcode2.ToString("X2") + " RL A";
                     }
                 case 0x18:
                     {
-                        return opcode2 + " RR B";
+                        return opcode2.ToString("X2") + " RR B";
                     }
                 case 0x19:
                     {
-                        return opcode2 + " RR C";
+                        return opcode2.ToString("X2") + " RR C";
                     }
                 case 0x1A:
                     {
-                        return opcode2 + " RR D";
+                        return opcode2.ToString("X2") + " RR D";
                     }
                 case 0x1B:
                     {
-                        return opcode2 + " RR E";
+                        return opcode2.ToString("X2") + " RR E";
                     }
                 case 0x1C:
                     {
-                        return opcode2 + " RR H";
+                        return opcode2.ToString("X2") + " RR H";
                     }
                 case 0x1D:
                     {
-                        return opcode2 + " RR L";
+                        return opcode2.ToString("X2") + " RR L";
                     }
                 case 0x1E:
                     {
-                        return opcode2 + " RR (HL)";
+                        return opcode2.ToString("X2") + " RR (HL)";
                     }
                 case 0x1F:
                     {
-                        return opcode2 + " RR A";
+                        return opcode2.ToString("X2") + " RR A";
                     }
                 case 0x20:
                     {
-                        return opcode2 + " SLA B";
+                        return opcode2.ToString("X2") + " SLA B";
                     }
                 case 0x21:
                     {
-                        return opcode2 + " SLA C";
+                        return opcode2.ToString("X2") + " SLA C";
                     }
                 case 0x22:
                     {
-                        return opcode2 + " SLA D";
+                        return opcode2.ToString("X2") + " SLA D";
                     }
                 case 0x23:
                     {
-                        return opcode2 + " SLA E";
+                        return opcode2.ToString("X2") + " SLA E";
                     }
                 case 0x24:
                     {
-                        return opcode2 + " SLA H";
+                        return opcode2.ToString("X2") + " SLA H";
                     }
                 case 0x25:
                     {
-                        return opcode2 + " SLA L";
+                        return opcode2.ToString("X2") + " SLA L";
                     }
                 case 0x26:
                     {
-                        return opcode2 + " SLA (HL)";
+                        return opcode2.ToString("X2") + " SLA (HL)";
                     }
                 case 0x27:
                     {
-                        return opcode2 + " SLA A";
+                        return opcode2.ToString("X2") + " SLA A";
                     }
                 case 0x28:
                     {
-                        return opcode2 + " SRA B";
+                        return opcode2.ToString("X2") + " SRA B";
                     }
                 case 0x29:
                     {
-                        return opcode2 + " SRA C";
+                        return opcode2.ToString("X2") + " SRA C";
                     }
                 case 0x2A:
                     {
-                        return opcode2 + " SRA D";
+                        return opcode2.ToString("X2") + " SRA D";
                     }
                 case 0x2B:
                     {
-                        return opcode2 + " SRA E";
+                        return opcode2.ToString("X2") + " SRA E";
                     }
                 case 0x2C:
                     {
-                        return opcode2 + " SRA H";
+                        return opcode2.ToString("X2") + " SRA H";
                     }
                 case 0x2D:
                     {
-                        return opcode2 + " SRA L";
+                        return opcode2.ToString("X2") + " SRA L";
                     }
                 case 0x2E:
                     {
-                        return opcode2 + " SRA (HL)";
+                        return opcode2.ToString("X2") + " SRA (HL)";
                     }
                 case 0x2F:
                     {
-                        return opcode2 + " SRA A";
+                        return opcode2.ToString("X2") + " SRA A";
                     }
                 case 0x30:
                     {
-                        return opcode2 + " SWAP B";
+                        return opcode2.ToString("X2") + " SWAP B";
                     }
                 case 0x31:
                     {
-                        return opcode2 + " SWAP C";
+                        return opcode2.ToString("X2") + " SWAP C";
                     }
                 case 0x32:
                     {
-                        return opcode2 + " SWAP D";
+                        return opcode2.ToString("X2") + " SWAP D";
                     }
                 case 0x33:
                     {
-                        return opcode2 + " SWAP E";
+                        return opcode2.ToString("X2") + " SWAP E";
                     }
                 case 0x34:
                     {
-                        return opcode2 + " SWAP H";
+                        return opcode2.ToString("X2") + " SWAP H";
                     }
                 case 0x35:
                     {
-                        return opcode2 + " SWAP L";
+                        return opcode2.ToString("X2") + " SWAP L";
                     }
                 case 0x36:
                     {
-                        return opcode2 + " SWAP (HL)";
+                        return opcode2.ToString("X2") + " SWAP (HL)";
                     }
                 case 0x37:
                     {
-                        return opcode2 + " SWAP A";
+                        return opcode2.ToString("X2") + " SWAP A";
                     }
                 case 0x38:
                     {
-                        return opcode2 + " SRL B";
+                        return opcode2.ToString("X2") + " SRL B";
                     }
                 case 0x39:
                     {
-                        return opcode2 + " SRL C";
+                        return opcode2.ToString("X2") + " SRL C";
                     }
                 case 0x3A:
                     {
-                        return opcode2 + " SRL D";
+                        return opcode2.ToString("X2") + " SRL D";
                     }
                 case 0x3B:
                     {
-                        return opcode2 + " SRL E";
+                        return opcode2.ToString("X2") + " SRL E";
                     }
                 case 0x3C:
                     {
-                        return opcode2 + " SRL H";
+                        return opcode2.ToString("X2") + " SRL H";
                     }
                 case 0x3D:
                     {
-                        return opcode2 + " SRL L";
+                        return opcode2.ToString("X2") + " SRL L";
                     }
                 case 0x3E:
                     {
-                        return opcode2 + " SRL (HL)";
+                        return opcode2.ToString("X2") + " SRL (HL)";
                     }
                 case 0x3F:
                     {
-                        return opcode2 + " SRL A";
+                        return opcode2.ToString("X2") + " SRL A";
                     }
                 case 0x40:
                     {
-                        return opcode2 + " BIT 0, B";
+                        return opcode2.ToString("X2") + " BIT 0, B";
                     }
                 case 0x41:
                     {
-                        return opcode2 + " BIT 0, C";
+                        return opcode2.ToString("X2") + " BIT 0, C";
                     }
                 case 0x42:
                     {
-                        return opcode2 + " BIT 0, D";
+                        return opcode2.ToString("X2") + " BIT 0, D";
                     }
                 case 0x43:
                     {
-                        return opcode2 + " BIT 0, E";
+                        return opcode2.ToString("X2") + " BIT 0, E";
                     }
                 case 0x44:
                     {
-                        return opcode2 + " BIT 0, H";
+                        return opcode2.ToString("X2") + " BIT 0, H";
                     }
                 case 0x45:
                     {
-                        return opcode2 + " BIT 0, L";
+                        return opcode2.ToString("X2") + " BIT 0, L";
                     }
                 case 0x46:
                     {
-                        return opcode2 + " BIT 0, (HL)";
+                        return opcode2.ToString("X2") + " BIT 0, (HL)";
                     }
                 case 0x47:
                     {
-                        return opcode2 + " BIT 0, A";
+                        return opcode2.ToString("X2") + " BIT 0, A";
                     }
                 case 0x48:
                     {
-                        return opcode2 + " BIT 1, B";
+                        return opcode2.ToString("X2") + " BIT 1, B";
                     }
                 case 0x49:
                     {
-                        return opcode2 + " BIT 1, C";
+                        return opcode2.ToString("X2") + " BIT 1, C";
                     }
                 case 0x4A:
                     {
-                        return opcode2 + " BIT 1, D";
+                        return opcode2.ToString("X2") + " BIT 1, D";
                     }
                 case 0x4B:
                     {
-                        return opcode2 + " BIT 1, E";
+                        return opcode2.ToString("X2") + " BIT 1, E";
                     }
                 case 0x4C:
                     {
-                        return opcode2 + " BIT 1, H";
+                        return opcode2.ToString("X2") + " BIT 1, H";
                     }
                 case 0x4D:
                     {
-                        return opcode2 + " BIT 1, L";
+                        return opcode2.ToString("X2") + " BIT 1, L";
                     }
                 case 0x4E:
                     {
-                        return opcode2 + " BIT 1, (HL)";
+                        return opcode2.ToString("X2") + " BIT 1, (HL)";
                     }
                 case 0x4F:
                     {
-                        return opcode2 + " BIT 1, A";
+                        return opcode2.ToString("X2") + " BIT 1, A";
                     }
                 case 0x50:
                     {
-                        return opcode2 + " BIT 2, B";
+                        return opcode2.ToString("X2") + " BIT 2, B";
                     }
                 case 0x51:
                     {
-                        return opcode2 + " BIT 2, C";
+                        return opcode2.ToString("X2") + " BIT 2, C";
                     }
                 case 0x52:
                     {
-                        return opcode2 + " BIT 2, D";
+                        return opcode2.ToString("X2") + " BIT 2, D";
                     }
                 case 0x53:
                     {
-                        return opcode2 + " BIT 2, E";
+                        return opcode2.ToString("X2") + " BIT 2, E";
                     }
                 case 0x54:
                     {
-                        return opcode2 + " BIT 2, H";
+                        return opcode2.ToString("X2") + " BIT 2, H";
                     }
                 case 0x55:
                     {
-                        return opcode2 + " BIT 2, L";
+                        return opcode2.ToString("X2") + " BIT 2, L";
                     }
                 case 0x56:
                     {
-                        return opcode2 + " BIT 2, (HL)";
+                        return opcode2.ToString("X2") + " BIT 2, (HL)";
                     }
                 case 0x57:
                     {
-                        return opcode2 + " BIT 2, A";
+                        return opcode2.ToString("X2") + " BIT 2, A";
                     }
                 case 0x58:
                     {
-                        return opcode2 + " BIT 3, B";
+                        return opcode2.ToString("X2") + " BIT 3, B";
                     }
                 case 0x59:
                     {
-                        return opcode2 + " BIT 3, C";
+                        return opcode2.ToString("X2") + " BIT 3, C";
                     }
                 case 0x5A:
                     {
-                        return opcode2 + " BIT 3, D";
+                        return opcode2.ToString("X2") + " BIT 3, D";
                     }
                 case 0x5B:
                     {
-                        return opcode2 + " BIT 3, E";
+                        return opcode2.ToString("X2") + " BIT 3, E";
                     }
                 case 0x5C:
                     {
-                        return opcode2 + " BIT 3, H";
+                        return opcode2.ToString("X2") + " BIT 3, H";
                     }
                 case 0x5D:
                     {
-                        return opcode2 + " BIT 3, L";
+                        return opcode2.ToString("X2") + " BIT 3, L";
                     }
                 case 0x5E:
                     {
-                        return opcode2 + " BIT 3, (HL)";
+                        return opcode2.ToString("X2") + " BIT 3, (HL)";
                     }
                 case 0x5F:
                     {
-                        return opcode2 + " BIT 3, A";
+                        return opcode2.ToString("X2") + " BIT 3, A";
                     }
                 case 0x60:
                     {
-                        return opcode2 + " BIT 4, B";
+                        return opcode2.ToString("X2") + " BIT 4, B";
                     }
                 case 0x61:
                     {
-                        return opcode2 + " BIT 4, C";
+                        return opcode2.ToString("X2") + " BIT 4, C";
                     }
                 case 0x62:
                     {
-                        return opcode2 + " BIT 4, D";
+                        return opcode2.ToString("X2") + " BIT 4, D";
                     }
                 case 0x63:
                     {
-                        return opcode2 + " BIT 4, E";
+                        return opcode2.ToString("X2") + " BIT 4, E";
                     }
                 case 0x64:
                     {
-                        return opcode2 + " BIT 4, H";
+                        return opcode2.ToString("X2") + " BIT 4, H";
                     }
                 case 0x65:
                     {
-                        return opcode2 + " BIT 4, L";
+                        return opcode2.ToString("X2") + " BIT 4, L";
                     }
                 case 0x66:
                     {
-                        return opcode2 + " BIT 4, (HL)";
+                        return opcode2.ToString("X2") + " BIT 4, (HL)";
                     }
                 case 0x67:
                     {
-                        return opcode2 + " BIT 4, A";
+                        return opcode2.ToString("X2") + " BIT 4, A";
                     }
                 case 0x68:
                     {
-                        return opcode2 + " BIT 5, B";
+                        return opcode2.ToString("X2") + " BIT 5, B";
                     }
                 case 0x69:
                     {
-                        return opcode2 + " BIT 5, C";
+                        return opcode2.ToString("X2") + " BIT 5, C";
                     }
                 case 0x6A:
                     {
-                        return opcode2 + " BIT 5, D";
+                        return opcode2.ToString("X2") + " BIT 5, D";
                     }
                 case 0x6B:
                     {
-                        return opcode2 + " BIT 5, E";
+                        return opcode2.ToString("X2") + " BIT 5, E";
                     }
                 case 0x6C:
                     {
-                        return opcode2 + " BIT 5, H";
+                        return opcode2.ToString("X2") + " BIT 5, H";
                     }
                 case 0x6D:
                     {
-                        return opcode2 + " BIT 5, L";
+                        return opcode2.ToString("X2") + " BIT 5, L";
                     }
                 case 0x6E:
                     {
-                        return opcode2 + " BIT 5, (HL)";
+                        return opcode2.ToString("X2") + " BIT 5, (HL)";
                     }
                 case 0x6F:
                     {
-                        return opcode2 + " BIT 5, A";
+                        return opcode2.ToString("X2") + " BIT 5, A";
                     }
                 case 0x70:
                     {
-                        return opcode2 + " BIT 6, B";
+                        return opcode2.ToString("X2") + " BIT 6, B";
                     }
                 case 0x71:
                     {
-                        return opcode2 + " BIT 6, C";
+                        return opcode2.ToString("X2") + " BIT 6, C";
                     }
                 case 0x72:
                     {
-                        return opcode2 + " BIT 6, D";
+                        return opcode2.ToString("X2") + " BIT 6, D";
                     }
                 case 0x73:
                     {
-                        return opcode2 + " BIT 6, E";
+                        return opcode2.ToString("X2") + " BIT 6, E";
                     }
                 case 0x74:
                     {
-                        return opcode2 + " BIT 6, H";
+                        return opcode2.ToString("X2") + " BIT 6, H";
                     }
                 case 0x75:
                     {
-                        return opcode2 + " BIT 6, L";
+                        return opcode2.ToString("X2") + " BIT 6, L";
                     }
                 case 0x76:
                     {
-                        return opcode2 + " BIT 6, (HL)";
+                        return opcode2.ToString("X2") + " BIT 6, (HL)";
                     }
                 case 0x77:
                     {
-                        return opcode2 + " BIT 6, A";
+                        return opcode2.ToString("X2") + " BIT 6, A";
                     }
                 case 0x78:
                     {
-                        return opcode2 + " BIT 7, B";
+                        return opcode2.ToString("X2") + " BIT 7, B";
                     }
                 case 0x79:
                     {
-                        return opcode2 + " BIT 7, C";
+                        return opcode2.ToString("X2") + " BIT 7, C";
                     }
                 case 0x7A:
                     {
-                        return opcode2 + " BIT 7, D";
+                        return opcode2.ToString("X2") + " BIT 7, D";
                     }
                 case 0x7B:
                     {
-                        return opcode2 + " BIT 7, E";
+                        return opcode2.ToString("X2") + " BIT 7, E";
                     }
                 case 0x7C:
                     {
-                        return opcode2 + " BIT 7, H";
+                        return opcode2.ToString("X2") + " BIT 7, H";
                     }
                 case 0x7D:
                     {
-                        return opcode2 + " BIT 7, L";
+                        return opcode2.ToString("X2") + " BIT 7, L";
                     }
                 case 0x7E:
                     {
-                        return opcode2 + " BIT 7, (HL)";
+                        return opcode2.ToString("X2") + " BIT 7, (HL)";
                     }
                 case 0x7F:
                     {
-                        return opcode2 + " BIT 7, A";
+                        return opcode2.ToString("X2") + " BIT 7, A";
                     }
                 case 0x80:
                     {
-                        return opcode2 + " RES 0, B";
+                        return opcode2.ToString("X2") + " RES 0, B";
                     }
                 case 0x81:
                     {
-                        return opcode2 + " RES 0, C";
+                        return opcode2.ToString("X2") + " RES 0, C";
                     }
                 case 0x82:
                     {
-                        return opcode2 + " RES 0, D";
+                        return opcode2.ToString("X2") + " RES 0, D";
                     }
                 case 0x83:
                     {
-                        return opcode2 + " RES 0, E";
+                        return opcode2.ToString("X2") + " RES 0, E";
                     }
                 case 0x84:
                     {
-                        return opcode2 + " RES 0, H";
+                        return opcode2.ToString("X2") + " RES 0, H";
                     }
                 case 0x85:
                     {
-                        return opcode2 + " RES 0, L";
+                        return opcode2.ToString("X2") + " RES 0, L";
                     }
                 case 0x86:
                     {
 
-                        return opcode2 + " RES 0, (HL)";
+                        return opcode2.ToString("X2") + " RES 0, (HL)";
                     }
                 case 0x87:
                     {
-                        return opcode2 + " RES 0, A";
+                        return opcode2.ToString("X2") + " RES 0, A";
                     }
                 case 0x88:
                     {
-                        return opcode2 + " RES 1, B";
+                        return opcode2.ToString("X2") + " RES 1, B";
                     }
                 case 0x89:
                     {
-                        return opcode2 + " RES 1, C";
+                        return opcode2.ToString("X2") + " RES 1, C";
                     }
                 case 0x8A:
                     {
-                        return opcode2 + " RES 1, D";
+                        return opcode2.ToString("X2") + " RES 1, D";
                     }
                 case 0x8B:
                     {
-                        return opcode2 + " RES 1, E";
+                        return opcode2.ToString("X2") + " RES 1, E";
                     }
                 case 0x8C:
                     {
-                        return opcode2 + " RES 1, H";
+                        return opcode2.ToString("X2") + " RES 1, H";
                     }
                 case 0x8D:
                     {
-                        return opcode2 + " RES 1, L";
+                        return opcode2.ToString("X2") + " RES 1, L";
                     }
                 case 0x8E:
                     {
-                        return opcode2 + " RES 1, (HL)";
+                        return opcode2.ToString("X2") + " RES 1, (HL)";
                     }
                 case 0x8F:
                     {
-                        return opcode2 + " RES 1, A";
+                        return opcode2.ToString("X2") + " RES 1, A";
                     }
                 case 0x90:
                     {
-                        return opcode2 + " RES 2, B";
+                        return opcode2.ToString("X2") + " RES 2, B";
                     }
                 case 0x91:
                     {
-                        return opcode2 + " RES 2, C";
+                        return opcode2.ToString("X2") + " RES 2, C";
                     }
                 case 0x92:
                     {
-                        return opcode2 + " RES 2, D";
+                        return opcode2.ToString("X2") + " RES 2, D";
                     }
                 case 0x93:
                     {
-                        return opcode2 + " RES 2, E";
+                        return opcode2.ToString("X2") + " RES 2, E";
                     }
                 case 0x94:
                     {
-                        return opcode2 + " RES 2, H";
+                        return opcode2.ToString("X2") + " RES 2, H";
                     }
                 case 0x95:
                     {
-                        return opcode2 + " RES 2, L";
+                        return opcode2.ToString("X2") + " RES 2, L";
                     }
                 case 0x96:
                     {
-                        return opcode2 + " RES 2, (HL)";
+                        return opcode2.ToString("X2") + " RES 2, (HL)";
                     }
                 case 0x97:
                     {
-                        return opcode2 + " RES 2, A";
+                        return opcode2.ToString("X2") + " RES 2, A";
                     }
                 case 0x98:
                     {
-                        return opcode2 + " RES 3, B";
+                        return opcode2.ToString("X2") + " RES 3, B";
                     }
                 case 0x99:
                     {
-                        return opcode2 + " RES 3, C";
+                        return opcode2.ToString("X2") + " RES 3, C";
                     }
                 case 0x9A:
                     {
-                        return opcode2 + " RES 3, D";
+                        return opcode2.ToString("X2") + " RES 3, D";
                     }
                 case 0x9B:
                     {
-                        return opcode2 + " RES 3, E";
+                        return opcode2.ToString("X2") + " RES 3, E";
                     }
                 case 0x9C:
                     {
-                        return opcode2 + " RES 3, H";
+                        return opcode2.ToString("X2") + " RES 3, H";
                     }
                 case 0x9D:
                     {
-                        return opcode2 + " RES 3, L";
+                        return opcode2.ToString("X2") + " RES 3, L";
                     }
                 case 0x9E:
                     {
-                        return opcode2 + " RES 3, (HL)";
+                        return opcode2.ToString("X2") + " RES 3, (HL)";
                     }
                 case 0x9F:
                     {
-                        return opcode2 + " RES 3, A";
+                        return opcode2.ToString("X2") + " RES 3, A";
                     }
                 case 0xA0:
                     {
-                        return opcode2 + " RES 4, B";
+                        return opcode2.ToString("X2") + " RES 4, B";
                     }
                 case 0xA1:
                     {
-                        return opcode2 + " RES 4, C";
+                        return opcode2.ToString("X2") + " RES 4, C";
                     }
                 case 0xA2:
                     {
-                        return opcode2 + " RES 4, D";
+                        return opcode2.ToString("X2") + " RES 4, D";
                     }
                 case 0xA3:
                     {
-                        return opcode2 + " RES 4, E";
+                        return opcode2.ToString("X2") + " RES 4, E";
                     }
                 case 0xA4:
                     {
-                        return opcode2 + " RES 4, H";
+                        return opcode2.ToString("X2") + " RES 4, H";
                     }
                 case 0xA5:
                     {
-                        return opcode2 + " RES 4, L";
+                        return opcode2.ToString("X2") + " RES 4, L";
                     }
                 case 0xA6:
                     {
-                        return opcode2 + " RES 4, (HL)";
+                        return opcode2.ToString("X2") + " RES 4, (HL)";
                     }
                 case 0xA7:
                     {
-                        return opcode2 + " RES 4, A";
+                        return opcode2.ToString("X2") + " RES 4, A";
                     }
                 case 0xA8:
                     {
-                        return opcode2 + " RES 5, B";
+                        return opcode2.ToString("X2") + " RES 5, B";
                     }
                 case 0xA9:
                     {
-                        return opcode2 + " RES 5, C";
+                        return opcode2.ToString("X2") + " RES 5, C";
                     }
                 case 0xAA:
                     {
-                        return opcode2 + " RES 5, D";
+                        return opcode2.ToString("X2") + " RES 5, D";
                     }
                 case 0xAB:
                     {
-                        return opcode2 + " RES 5, E";
+                        return opcode2.ToString("X2") + " RES 5, E";
                     }
                 case 0xAC:
                     {
-                        return opcode2 + " RES 5, H";
+                        return opcode2.ToString("X2") + " RES 5, H";
                     }
                 case 0xAD:
                     {
-                        return opcode2 + " RES 5, L";
+                        return opcode2.ToString("X2") + " RES 5, L";
                     }
                 case 0xAE:
                     {
-                        return opcode2 + " RES 5, (HL)";
+                        return opcode2.ToString("X2") + " RES 5, (HL)";
                     }
                 case 0xAF:
                     {
-                        return opcode2 + " RES 5, A";
+                        return opcode2.ToString("X2") + " RES 5, A";
                     }
                 case 0xB0:
                     {
-                        return opcode2 + " RES 6, B";
+                        return opcode2.ToString("X2") + " RES 6, B";
                     }
                 case 0xB1:
                     {
-                        return opcode2 + " RES 6, C";
+                        return opcode2.ToString("X2") + " RES 6, C";
                     }
                 case 0xB2:
                     {
-                        return opcode2 + " RES 6, D";
+                        return opcode2.ToString("X2") + " RES 6, D";
                     }
                 case 0xB3:
                     {
-                        return opcode2 + " RES 6, E";
+                        return opcode2.ToString("X2") + " RES 6, E";
                     }
                 case 0xB4:
                     {
-                        return opcode2 + " RES 6, H";
+                        return opcode2.ToString("X2") + " RES 6, H";
                     }
                 case 0xB5:
                     {
-                        return opcode2 + " RES 6, L";
+                        return opcode2.ToString("X2") + " RES 6, L";
                     }
                 case 0xB6:
                     {
-                        return opcode2 + " RES 6, (HL)";
+                        return opcode2.ToString("X2") + " RES 6, (HL)";
                     }
                 case 0xB7:
                     {
-                        return opcode2 + " RES 6, A";
+                        return opcode2.ToString("X2") + " RES 6, A";
                     }
                 case 0xB8:
                     {
-                        return opcode2 + " RES 7, B";
+                        return opcode2.ToString("X2") + " RES 7, B";
                     }
                 case 0xB9:
                     {
-                        return opcode2 + " RES 7, C";
+                        return opcode2.ToString("X2") + " RES 7, C";
                     }
                 case 0xBA:
                     {
-                        return opcode2 + " RES 7, D";
+                        return opcode2.ToString("X2") + " RES 7, D";
                     }
                 case 0xBB:
                     {
-                        return opcode2 + " RES 7, E";
+                        return opcode2.ToString("X2") + " RES 7, E";
                     }
                 case 0xBC:
                     {
-                        return opcode2 + " RES 7, H";
+                        return opcode2.ToString("X2") + " RES 7, H";
                     }
                 case 0xBD:
                     {
-                        return opcode2 + " RES 7, L";
+                        return opcode2.ToString("X2") + " RES 7, L";
                     }
                 case 0xBE:
                     {
-                        return opcode2 + " RES 7, (HL)";
+                        return opcode2.ToString("X2") + " RES 7, (HL)";
                     }
                 case 0xBF:
                     {
-                        return opcode2 + " RES 7, A";
+                        return opcode2.ToString("X2") + " RES 7, A";
                     }
                 case 0xC0:
                     {
-                        return opcode2 + " SET 0, B";
+                        return opcode2.ToString("X2") + " SET 0, B";
                     }
                 case 0xC1:
                     {
-                        return opcode2 + " SET 0, C";
+                        return opcode2.ToString("X2") + " SET 0, C";
                     }
                 case 0xC2:
                     {
-                        return opcode2 + " SET 0, D";
+                        return opcode2.ToString("X2") + " SET 0, D";
                     }
                 case 0xC3:
                     {
-                        return opcode2 + " SET 0, E";
+                        return opcode2.ToString("X2") + " SET 0, E";
                     }
                 case 0xC4:
                     {
-                        return opcode2 + " SET 0, H";
+                        return opcode2.ToString("X2") + " SET 0, H";
                     }
                 case 0xC5:
                     {
-                        return opcode2 + " SET 0, L";
+                        return opcode2.ToString("X2") + " SET 0, L";
                     }
                 case 0xC6:
                     {
-                        return opcode2 + " SET 0, (HL)";
+                        return opcode2.ToString("X2") + " SET 0, (HL)";
                     }
                 case 0xC7:
                     {
-                        return opcode2 + " SET 0, A";
+                        return opcode2.ToString("X2") + " SET 0, A";
                     }
                 case 0xC8:
                     {
-                        return opcode2 + " SET 1, B";
+                        return opcode2.ToString("X2") + " SET 1, B";
                     }
                 case 0xC9:
                     {
-                        return opcode2 + " SET 1, C";
+                        return opcode2.ToString("X2") + " SET 1, C";
                     }
                 case 0xCA:
                     {
-                        return opcode2 + " SET 1, D";
+                        return opcode2.ToString("X2") + " SET 1, D";
                     }
                 case 0xCB:
                     {
-                        return opcode2 + " SET 1, E";
+                        return opcode2.ToString("X2") + " SET 1, E";
                     }
                 case 0xCC:
                     {
-                        return opcode2 + " SET 1, H";
+                        return opcode2.ToString("X2") + " SET 1, H";
                     }
                 case 0xCD:
                     {
-                        return opcode2 + " SET 1, L";
+                        return opcode2.ToString("X2") + " SET 1, L";
                     }
                 case 0xCE:
                     {
-                        return opcode2 + " SET 1, (HL)";
+                        return opcode2.ToString("X2") + " SET 1, (HL)";
                     }
                 case 0xCF:
                     {
-                        return opcode2 + " SET 1, A";
+                        return opcode2.ToString("X2") + " SET 1, A";
                     }
                 case 0xD0:
                     {
-                        return opcode2 + " SET 2, B";
+                        return opcode2.ToString("X2") + " SET 2, B";
                     }
                 case 0xD1:
                     {
-                        return opcode2 + " SET 2, C";
+                        return opcode2.ToString("X2") + " SET 2, C";
                     }
                 case 0xD2:
                     {
-                        return opcode2 + " SET 2, D";
+                        return opcode2.ToString("X2") + " SET 2, D";
                     }
                 case 0xD3:
                     {
-                        return opcode2 + " SET 2, E";
+                        return opcode2.ToString("X2") + " SET 2, E";
                     }
                 case 0xD4:
                     {
-                        return opcode2 + " SET 2, H";
+                        return opcode2.ToString("X2") + " SET 2, H";
                     }
                 case 0xD5:
                     {
-                        return opcode2 + " SET 2, L";
+                        return opcode2.ToString("X2") + " SET 2, L";
                     }
                 case 0xD6:
                     {
-                        return opcode2 + " SET 2, (HL)";
+                        return opcode2.ToString("X2") + " SET 2, (HL)";
                     }
                 case 0xD7:
                     {
-                        return opcode2 + " SET 2, A";
+                        return opcode2.ToString("X2") + " SET 2, A";
                     }
                 case 0xD8:
                     {
-                        return opcode2 + " SET 3, B";
+                        return opcode2.ToString("X2") + " SET 3, B";
                     }
                 case 0xD9:
                     {
-                        return opcode2 + " SET 3, C";
+                        return opcode2.ToString("X2") + " SET 3, C";
                     }
                 case 0xDA:
                     {
-                        return opcode2 + " SET 3, D";
+                        return opcode2.ToString("X2") + " SET 3, D";
                     }
                 case 0xDB:
                     {
-                        return opcode2 + " SET 3, E";
+                        return opcode2.ToString("X2") + " SET 3, E";
                     }
                 case 0xDC:
                     {
-                        return opcode2 + " SET 3, H";
+                        return opcode2.ToString("X2") + " SET 3, H";
                     }
                 case 0xDD:
                     {
-                        return opcode2 + " SET 3, L";
+                        return opcode2.ToString("X2") + " SET 3, L";
                     }
                 case 0xDE:
                     {
-                        return opcode2 + " SET 3, (HL)";
+                        return opcode2.ToString("X2") + " SET 3, (HL)";
                     }
                 case 0xDF:
                     {
-                        return opcode2 + " SET 3, A";
+                        return opcode2.ToString("X2") + " SET 3, A";
                     }
                 case 0xE0:
                     {
-                        return opcode2 + " SET 4, B";
+                        return opcode2.ToString("X2") + " SET 4, B";
                     }
                 case 0xE1:
                     {
-                        return opcode2 + " SET 4, C";
+                        return opcode2.ToString("X2") + " SET 4, C";
                     }
                 case 0xE2:
                     {
-                        return opcode2 + " SET 4, D";
+                        return opcode2.ToString("X2") + " SET 4, D";
                     }
                 case 0xE3:
                     {
-                        return opcode2 + " SET 4, E";
+                        return opcode2.ToString("X2") + " SET 4, E";
                     }
                 case 0xE4:
                     {
-                        return opcode2 + " SET 4, H";
+                        return opcode2.ToString("X2") + " SET 4, H";
                     }
                 case 0xE5:
                     {
-                        return opcode2 + " SET 4, L";
+                        return opcode2.ToString("X2") + " SET 4, L";
                     }
                 case 0xE6:
                     {
-                        return opcode2 + " SET 4, (HL)";
+                        return opcode2.ToString("X2") + " SET 4, (HL)";
                     }
                 case 0xE7:
                     {
-                        return opcode2 + " SET 4, A";
+                        return opcode2.ToString("X2") + " SET 4, A";
                     }
                 case 0xE8:
                     {
-                        return opcode2 + " SET 5, B";
+                        return opcode2.ToString("X2") + " SET 5, B";
                     }
                 case 0xE9:
                     {
-                        return opcode2 + " SET 5, C";
+                        return opcode2.ToString("X2") + " SET 5, C";
                     }
                 case 0xEA:
                     {
-                        return opcode2 + " SET 5, D";
+                        return opcode2.ToString("X2") + " SET 5, D";
                     }
                 case 0xEB:
                     {
-                        return opcode2 + " SET 5, E";
+                        return opcode2.ToString("X2") + " SET 5, E";
                     }
                 case 0xEC:
                     {
-                        return opcode2 + " SET 5, H";
+                        return opcode2.ToString("X2") + " SET 5, H";
                     }
                 case 0xED:
                     {
-                        return opcode2 + " SET 5, L";
+                        return opcode2.ToString("X2") + " SET 5, L";
                     }
                 case 0xEE:
                     {
-                        return opcode2 + " SET 5, (HL)";
+                        return opcode2.ToString("X2") + " SET 5, (HL)";
                     }
                 case 0xEF:
                     {
-                        return opcode2 + " SET 5, A";
+                        return opcode2.ToString("X2") + " SET 5, A";
                     }
                 case 0xF0:
                     {
-                        return opcode2 + " SET 6, B";
+                        return opcode2.ToString("X2") + " SET 6, B";
                     }
                 case 0xF1:
                     {
-                        return opcode2 + " SET 6, C";
+                        return opcode2.ToString("X2") + " SET 6, C";
                     }
                 case 0xF2:
                     {
-                        return opcode2 + " SET 6, D";
+                        return opcode2.ToString("X2") + " SET 6, D";
                     }
                 case 0xF3:
                     {
-                        return opcode2 + " SET 6, E";
+                        return opcode2.ToString("X2") + " SET 6, E";
                     }
                 case 0xF4:
                     {
-                        return opcode2 + " SET 6, H";
+                        return opcode2.ToString("X2") + " SET 6, H";
                     }
                 case 0xF5:
                     {
-                        return opcode2 + " SET 6, L";
+                        return opcode2.ToString("X2") + " SET 6, L";
                     }
                 case 0xF6:
                     {
-                        return opcode2 + " SET 6, (HL)";
+                        return opcode2.ToString("X2") + " SET 6, (HL)";
                     }
                 case 0xF7:
                     {
-                        return opcode2 + " SET 6, A";
+                        return opcode2.ToString("X2") + " SET 6, A";
                     }
                 case 0xF8:
                     {
-                        return opcode2 + " SET 7, B";
+                        return opcode2.ToString("X2") + " SET 7, B";
                     }
                 case 0xF9:
                     {
-                        return opcode2 + " SET 7, C";
+                        return opcode2.ToString("X2") + " SET 7, C";
                     }
                 case 0xFA:
                     {
-                        return opcode2 + " SET 7, D";
+                        return opcode2.ToString("X2") + " SET 7, D";
                     }
                 case 0xFB:
                     {
-                        return opcode2 + " SET 7, E";
+                        return opcode2.ToString("X2") + " SET 7, E";
                     }
                 case 0xFC:
                     {
-                        return opcode2 + " SET 7, H";
+                        return opcode2.ToString("X2") + " SET 7, H";
                     }
                 case 0xFD:
                     {
-                        return opcode2 + " SET 7, L";
+                        return opcode2.ToString("X2") + " SET 7, L";
                     }
                 case 0xFE:
                     {
-                        return opcode2 + " SET 7, (HL)";
+                        return opcode2.ToString("X2") + " SET 7, (HL)";
                     }
                 case 0xFF:
                     {
-                        return opcode2 + " SET 7, A";
+                        return opcode2.ToString("X2") + " SET 7, A";
                     }
                 default:
                     {
-                        return opcode2 + " UNKNOWN";
+                        return opcode2.ToString("X2") + " UNKNOWN";
                     }
             }
         }
@@ -2193,11 +2278,84 @@ namespace GameBoy_Revolution
             {
                 case 0x00:
                     {
-                        return opcode2 + " STOP";
+                        return opcode2.ToString("X2") + " STOP";
                     }
                 default:
                     {
-                        return opcode2 + " UNKNOWN";
+                        return opcode2.ToString("X2") + " UNKNOWN";
+                    }
+            }
+        }
+        #endregion
+
+        #region Memory Type Selector
+        private void cmbMemoryType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            switch (cmbMemoryType.Text)
+            {
+                case "Tile":
+                    {
+                        lblMemory.Text = cmbMemoryType.Text + " Memory";
+                        updateTileMem();
+                        return;
+                    }
+                case "Video":
+                    {
+                        lblMemory.Text = cmbMemoryType.Text + " Memory";
+                        updateVidMem();
+                        return;
+                    }
+                case "Ram Bank":
+                    {
+                        lblMemory.Text = cmbMemoryType.Text + " Memory";
+                        updateRamBankMem();
+                        return;
+                    }
+                case "Internal Ram":
+                    {
+                        lblMemory.Text = cmbMemoryType.Text + " Memory";
+                        updateInternalRamMem();
+                        return;
+                    }
+                case "System":
+                    {
+                        lblMemory.Text = cmbMemoryType.Text + " Memory";
+                        updateSystemMem();
+                        return;
+                    }
+            }
+        }
+        #endregion
+
+        #region Update Memory
+        private void UpdateMemory()
+        {
+            switch (cmbMemoryType.Text)
+            {
+                case "Tile":
+                    {
+                        updateTileMem();
+                        return;
+                    }
+                case "Video":
+                    {
+                        updateVidMem();
+                        return;
+                    }
+                case "Ram Bank":
+                    {
+                        updateRamBankMem();
+                        return;
+                    }
+                case "Internal Ram":
+                    {
+                        updateInternalRamMem();
+                        return;
+                    }
+                case "System":
+                    {
+                        updateSystemMem();
+                        return;
                     }
             }
         }

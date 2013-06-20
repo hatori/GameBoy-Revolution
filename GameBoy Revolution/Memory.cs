@@ -12,9 +12,15 @@ namespace GameBoy_Revolution
         private byte[,] rom_banks;
         private FileStream read;
 
+        private byte keyBits;
+        private bool keyRow0;
+        private bool keyRow1;
+
         private string rom_title;
         private byte current_rom_bank_0;
         private byte current_rom_bank_1;
+        private byte mbc1_memory_mode;
+        private bool ram_enabled;
 
         private string rom_name;
         private byte game_type;
@@ -659,12 +665,26 @@ namespace GameBoy_Revolution
         }
         #endregion
 
+        #region Retrieve KeyBits
+        public byte Retrieve_KeyBits
+        {
+            get
+            {
+                return keyBits;
+            }
+            set
+            {
+                keyBits = value;
+            }
+        }
+        #endregion
+
         #region constructor
         public Memory()
         {
-            memory = new byte[0xFFFF];
-            ram_banks = new byte[0x10, 0x2000];
-            rom_banks = new byte[0x60, 0x4000];
+            memory = new byte[0x10000];
+            //ram_banks = new byte[0x10, 0x2000];
+            //rom_banks = new byte[0x60, 0x4000];
 
             Initialize_Memory();
             startup();
@@ -677,6 +697,9 @@ namespace GameBoy_Revolution
             rom_title = null;
             current_rom_bank_0 = 0;
             current_rom_bank_1 = 0;
+            keyBits = 0xFF;
+            keyRow0 = false;
+            keyRow1 = false;
         }
         #endregion
 
@@ -703,11 +726,19 @@ namespace GameBoy_Revolution
         #region setup rom settings
         private void setup_rom_settings()
         {
+            ram_enabled = false;
+
             switch (cart_type)
             {
                 case 0x0:
                     {
                         current_rom_bank_1 = 0x1;
+                        break;
+                    }
+                case 0x1:
+                    {
+                        current_rom_bank_1 = 0x1;
+                        mbc1_memory_mode = 0x0;
                         break;
                     }
             }
@@ -722,7 +753,7 @@ namespace GameBoy_Revolution
                 memory[i] = 0;
             }
 
-            for (int i = 0; i < 0x10; i++)
+            /*for (int i = 0; i < 0x10; i++)
             {
                 for (int k = 0; k < 0x2000; k++)
                 {
@@ -736,6 +767,34 @@ namespace GameBoy_Revolution
                 {
                     rom_banks[i, k] = 0;
                 }
+            }*/
+        }
+        #endregion
+
+        #region initialize rom
+        public void Initialize_Rom(byte size)
+        {
+            rom_banks = new byte[size, 0x4000];
+            for (int i = 0; i < size; i++)
+            {
+                for (int k = 0; k < 0x4000; k++)
+                {
+                    rom_banks[i, k] = 0;
+                }
+            }
+        }
+        #endregion
+
+        #region initialize ram
+        public void Initialize_Ram(byte size)
+        {
+            ram_banks = new byte[size, 0x2000];
+            for (int i = 0; i < size; i++)
+            {
+                for (int k = 0; k < 0x2000; k++)
+                {
+                    ram_banks[i, k] = 0;
+                }
             }
         }
         #endregion
@@ -746,13 +805,13 @@ namespace GameBoy_Revolution
             ushort source_addr = (ushort)(source << 8);
             for (int i = 0; i < 0xA0; i++)
             {
-                write_byte((ushort)(0xFE00 + i), read_byte((ushort)(source_addr + 1)));
+                write_byte((ushort)(0xFE00 + i), read_byte((ushort)(source_addr + i)));
             }
         }
         #endregion
 
         #region read byte
-        public byte read_byte(ushort address)
+        public byte read_byte(ushort address, bool raw_access = false)
         {
             if (address >= 0x0 && address < 0x4000)
             {
@@ -766,8 +825,22 @@ namespace GameBoy_Revolution
 
             if (address >= 0x8000 && address < memory.Length)
             {
+                if(raw_access == true)
+                    return memory[address];
+
                 if (address == 0xFF00)
+                {
+                    if (keyRow0)
+                    {
+                        P1 = (byte)(0x10 | (keyBits & 0xF));
+                    }
+                    else if (keyRow1)
+                    {
+                        P1 = (byte)(0x20 | (keyBits >> 4 & 0xF));
+                    }
+
                     return P1;
+                }
 
                 if (address == 0xFF01)
                     return SB;
@@ -928,138 +1001,143 @@ namespace GameBoy_Revolution
         #region write byte
         public void write_byte(ushort address, byte data)
         {
-            if (address >= 0x0 && address < memory.Length)
+            if (address >= 0x8000 && address < memory.Length)
             {
                 if (address == 0xFF00)
-                    P1 = data;
-
-                if (address == 0xFF01)
+                {
+                    if ((data & 0x20) == 0x20)
+                    {
+                        keyRow0 = true;
+                        keyRow1 = false;
+                    }
+                    if ((data & 0x10) == 0x10)
+                    {
+                        keyRow1 = true;
+                        keyRow0 = false;
+                    }
+                    if ((data & 0x30) == 0x30)
+                    {
+                        keyRow1 = false;
+                        keyRow0 = false;
+                    }
+                }
+                else if (address == 0xFF01)
                     SB = data;
-
-                if (address == 0xFF02)
+                else if (address == 0xFF02)
                     SC = data;
-
-                if (address == 0xFF04)
+                else if (address == 0xFF04)
                     DIV = 0x0;
-
-                if (address == 0xFF05)
+                else if (address == 0xFF05)
                     TIMA = data;
-
-                if (address == 0xFF06)
+                else if (address == 0xFF06)
                     TMA = data;
-
-                if (address == 0xFF07)
+                else if (address == 0xFF07)
                     TAC = data;
-
-                if (address == 0xFF0F)
+                else if (address == 0xFF0F)
                     IF = data;
-
-                if (address == 0xFFFF)
+                else if (address == 0xFFFF)
                     IE = data;
-
-                if (address == 0xFF40)
+                else if (address == 0xFF40)
                     LCDC = data;
-
-                if (address == 0xFF41)
+                else if (address == 0xFF41)
                     STAT = data;
-
-                if (address == 0xFF42)
+                else if (address == 0xFF42)
                     SCY = data;
-
-                if (address == 0xFF43)
+                else if (address == 0xFF43)
                     SCX = data;
-
-                if (address == 0xFF44)
-                    LY = data;
-
-                if (address == 0xFF45)
+                else if (address == 0xFF44)
+                    LY = 0;
+                else if (address == 0xFF45)
                     LYC = data;
-
-                if (address == 0xFF46)
+                else if (address == 0xFF46)
                 {
                     DMA = data;
                     HandleDMA(DMA);
                 }
-
-                if (address == 0xFF47)
+                else if (address == 0xFF47)
                     BGP = data;
-
-                if (address == 0xFF48)
+                else if (address == 0xFF48)
                     OBP0 = data;
-
-                if (address == 0xFF49)
+                else if (address == 0xFF49)
                     OBP1 = data;
-
-                if (address == 0xFF4A)
+                else if (address == 0xFF4A)
                     WY = data;
-
-                if (address == 0xFF4B)
+                else if (address == 0xFF4B)
                     WX = data;
-
-                if (address == 0xFF10)
+                else if (address == 0xFF10)
                     NR10 = data;
-
-                if (address == 0xFF11)
+                else if (address == 0xFF11)
                     NR11 = data;
-
-                if (address == 0xFF12)
+                else if (address == 0xFF12)
                     NR12 = data;
-
-                if (address == 0xFF13)
+                else if (address == 0xFF13)
                     NR13 = data;
-
-                if (address == 0xFF14)
+                else if (address == 0xFF14)
                     NR14 = data;
-
-                if (address == 0xFF16)
+                else if (address == 0xFF16)
                     NR21 = data;
-
-                if (address == 0xFF17)
+                else if (address == 0xFF17)
                     NR22 = data;
-
-                if (address == 0xFF18)
+                else if (address == 0xFF18)
                     NR23 = data;
-
-                if (address == 0xFF19)
+                else if (address == 0xFF19)
                     NR24 = data;
-
-                if (address == 0xFF1A)
+                else if (address == 0xFF1A)
                     NR30 = data;
-
-                if (address == 0xFF1B)
+                else if (address == 0xFF1B)
                     NR31 = data;
-
-                if (address == 0xFF1C)
+                else if (address == 0xFF1C)
                     NR32 = data;
-
-                if (address == 0xFF1D)
+                else if (address == 0xFF1D)
                     NR33 = data;
-
-                if (address == 0xFF1E)
+                else if (address == 0xFF1E)
                     NR34 = data;
-
-                if (address == 0xFF20)
+                else if (address == 0xFF20)
                     NR41 = data;
-
-                if (address == 0xFF21)
+                else if (address == 0xFF21)
                     NR42 = data;
-
-                if (address == 0xFF22)
+                else if (address == 0xFF22)
                     NR43 = data;
-
-                if (address == 0xFF23)
+                else if (address == 0xFF23)
                     NR44 = data;
-
-                if (address == 0xFF24)
+                else if (address == 0xFF24)
                     NR50 = data;
-
-                if (address == 0xFF25)
+                else if (address == 0xFF25)
                     NR51 = data;
-
-                if (address == 0xFF26)
+                else if (address == 0xFF26)
                     NR52 = data;
-
-                memory[address] = data;
+                else if (address >= 0xA000 && address < 0xC000)
+                {
+                    if (ram_enabled)
+                        memory[address] = data;
+                }
+                else if (address >= 0xC000 && address < 0xE000)
+                    memory[address] = data;
+                else if (address >= 0xE000 && address < 0xFE00)
+                {
+                    memory[address] = data;
+                    memory[address - 0x2000] = data;
+                }
+                else if (address >= 0xFEA0 && address < 0xFF00)
+                {
+                }
+                else if (address >= 0xFF4C && address < 0xFF80)
+                {
+                }
+                else
+                    memory[address] = data;
+            }
+            else
+            {
+                if(address >= 0x6000 && address <= 0x7FFF)
+                {
+                    mbc1_memory_mode = (byte)(data & 0x1);
+                }
+                else if (address >= 0x2000 && address <= 0x3FFF)
+                {
+                    if ((data & 0x1F) > 0)
+                        current_rom_bank_1 = (byte)(data & 0x1F);
+                }
             }
         }
         #endregion
@@ -1067,7 +1145,7 @@ namespace GameBoy_Revolution
         #region write ushort
         public void write_ushort(ushort address, ushort data)
         {
-            if (address >= 0x0 && address < (memory.Length - 1))
+            if (address >= 0x8000 && address < (memory.Length - 1))
             {
                 memory[(ushort)(address)] = (byte)(data & 0xFF);
                 memory[(ushort)(address + 1)] = (byte)((data >> 8) & 0xFF);
@@ -1096,7 +1174,6 @@ namespace GameBoy_Revolution
                 open.CheckFileExists = true;
                 open.CheckPathExists = true;
                 open.DefaultExt = ".gb";
-                open.InitialDirectory = Environment.CurrentDirectory;
                 open.Multiselect = false;
                 open.RestoreDirectory = true;
                 open.ShowReadOnly = false;
@@ -1110,6 +1187,7 @@ namespace GameBoy_Revolution
 
                     byte[] content = File.ReadAllBytes(open.FileName);
                     byte pages = (byte)(content.Length / 0x4000);
+                    Initialize_Rom(pages);
 
                     for (int i = 0x0; i < pages; i++)
                     {

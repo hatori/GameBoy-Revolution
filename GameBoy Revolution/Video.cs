@@ -30,7 +30,7 @@ namespace GameBoy_Revolution
         private CustomVertex.TransformedTextured[] customvertex;
         private DataStream vertex_data;
         private DataRectangle texture_data;
-        private uint[] data_copy;
+        private int[] data_copy;
         private int[] colors;
         private int height;
         private int width;
@@ -75,7 +75,7 @@ namespace GameBoy_Revolution
             try
             {
                 texture = new Texture(device, 256, 256, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
-                data_copy = new uint[256 * 256];
+                data_copy = new int[256 * 256];
             }
             catch (Direct3D9Exception e)
             {
@@ -93,7 +93,7 @@ namespace GameBoy_Revolution
         private void Load_Window_Size()
         {
             //string size = ((Form1)form1_reference).main_settings.read_config_setting("Game", "Window_Resolution");
-            string size = "160 x 144";
+            string size = "320 x 288";
 
             string[] sizes = size.Split(new string[] { " x " }, StringSplitOptions.RemoveEmptyEntries);
             width = int.Parse(sizes[0]);
@@ -173,8 +173,8 @@ namespace GameBoy_Revolution
             screen.FormBorderStyle = FormBorderStyle.FixedSingle;
             screen.StartPosition = FormStartPosition.CenterScreen;
             screen.FormClosing += new FormClosingEventHandler(screen_FormClosing);
-            this.closing += new CancelEventHandler(screen_FormClosing);
             screen.KeyDown += new KeyEventHandler(screen_KeyDown);
+            this.closing += new CancelEventHandler(screen_FormClosing);
             Configuration.AddResultWatch(ResultCode.DeviceLost, ResultWatchFlags.AlwaysIgnore);
             Configuration.AddResultWatch(ResultCode.DeviceNotReset, ResultWatchFlags.AlwaysIgnore);
             screen.Show();
@@ -259,7 +259,7 @@ namespace GameBoy_Revolution
 
                 try
                 {
-                    texture = new Texture(device, 256, 256, 0, Usage.None, Format.A8B8G8R8, Pool.Managed);
+                    texture = new Texture(device, 256, 256, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
                 }
                 catch (Direct3D9Exception e)
                 {
@@ -309,11 +309,11 @@ namespace GameBoy_Revolution
             vb = new VertexBuffer(device, Marshal.SizeOf(typeof(CustomVertex.TransformedTextured)) * 6, Usage.WriteOnly, CustomVertex.TransformedTextured.Format, Pool.Default);
 
             customvertex[0] = new CustomVertex.TransformedTextured(new Vector4(0.0f, 0.0f, 0.0f, 1.0f), new Vector2(0.0f, 0.0f));
-            customvertex[1] = new CustomVertex.TransformedTextured(new Vector4(160.0f, 0.0f, 0.0f, 1.0f), new Vector2(0.625f, 0.0f));
-            customvertex[2] = new CustomVertex.TransformedTextured(new Vector4(0.0f, 144.0f, 0.0f, 1.0f), new Vector2(0.0f, 0.5625f));
-            customvertex[3] = new CustomVertex.TransformedTextured(new Vector4(160.0f, 0.0f, 0.0f, 1.0f), new Vector2(0.625f, 0.0f));
-            customvertex[4] = new CustomVertex.TransformedTextured(new Vector4(160.0f, 144.0f, 0.0f, 1.0f), new Vector2(0.625f, 0.5625f));
-            customvertex[5] = new CustomVertex.TransformedTextured(new Vector4(0.0f, 144.0f, 0.0f, 1.0f), new Vector2(0.0f, 0.5625f));
+            customvertex[1] = new CustomVertex.TransformedTextured(new Vector4(width, 0.0f, 0.0f, 1.0f), new Vector2(0.625f, 0.0f));
+            customvertex[2] = new CustomVertex.TransformedTextured(new Vector4(0.0f, height, 0.0f, 1.0f), new Vector2(0.0f, 0.5625f));
+            customvertex[3] = new CustomVertex.TransformedTextured(new Vector4(width, 0.0f, 0.0f, 1.0f), new Vector2(0.625f, 0.0f));
+            customvertex[4] = new CustomVertex.TransformedTextured(new Vector4(width, height, 0.0f, 1.0f), new Vector2(0.625f, 0.5625f));
+            customvertex[5] = new CustomVertex.TransformedTextured(new Vector4(0.0f, height, 0.0f, 1.0f), new Vector2(0.0f, 0.5625f));
 
             vertex_data = vb.Lock(0, Marshal.SizeOf(typeof(CustomVertex.TransformedTextured)) * 6, LockFlags.Discard);
             vertex_data.WriteRange(customvertex);
@@ -370,9 +370,9 @@ namespace GameBoy_Revolution
         #endregion
 
         #region set pixel
-        public void set_pixel(int x, int y, uint color)
+        public void set_pixel(int x, int y, int color)
         {
-            data_copy[(y * 256) + x] = color;
+            data_copy[(y << 8) | x] = color;
         }
         #endregion
 
@@ -389,7 +389,7 @@ namespace GameBoy_Revolution
             }
 
             texture_data = texture.LockRectangle(0, LockFlags.Discard | LockFlags.DoNotWait);
-            texture_data.Data.WriteRange<uint>(data_copy);
+            texture_data.Data.WriteRange<int>(data_copy);
             texture.UnlockRectangle(0);
         }
         #endregion
@@ -399,7 +399,7 @@ namespace GameBoy_Revolution
         {
             check_device();
 
-            if (deviceLost == true)
+            if (deviceLost == true || this.Directx_Window.Focused != true)
             {
                 return;
             }
@@ -530,6 +530,13 @@ namespace GameBoy_Revolution
         }
         #endregion
 
+        #region write data
+        public void write_data()
+        {
+            texture_data.Data.WriteRange<int>(data_copy);
+        }
+        #endregion
+
         #region lock texture
         public void lock_texture()
         {
@@ -540,6 +547,7 @@ namespace GameBoy_Revolution
         #region unlock texture
         public void unlock_texture()
         {
+            write_data();
             texture.UnlockRectangle(0);
         }
         #endregion
